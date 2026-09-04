@@ -264,8 +264,11 @@
       const img = new Image();
       img.onload = () => {
         const l=0.02657, r=0.06644, t=0.23148, b=0.47222;
-        const sx = img.width*l, sy = img.height*t;
-        const sw = img.width*(1-l-r), sh = img.height*(1-t-b);
+        let sx = img.width*l, sy = img.height*t;
+        let sw = img.width*(1-l-r), sh = img.height*(1-t-b);
+        // tighten further: trim 1/14 of the banner's own width off each side
+        sx += sw/14;
+        sw = sw*12/14;
         const canvas = document.createElement("canvas");
         canvas.width = sw; canvas.height = sh;
         canvas.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
