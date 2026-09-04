@@ -96,7 +96,7 @@
   </div>
 
   <div class="card">
-    <h2>3. Вручную: суть записки</h2>
+    <h2>3. Вручную: тема служебки</h2>
     <label>Тема</label>
     <input type="text" id="fTema">
     <div class="hint">Например <i>Проведение детского воркшопа «Ландшафты»</i>, или <i>Оснащение пространства Ателье</i></div>
@@ -112,20 +112,13 @@
   </div>
 
   <div class="card">
-    <h2>4. Постоянные реквизиты</h2>
-    <label>Кому</label>
-    <input type="text" id="fKomu">
-    <label>Согласовано</label>
-    <input type="text" id="fSoglasovano">
-    <label>Департамент</label>
-    <input type="text" id="fDept">
-  </div>
-
-  <div class="card">
-    <h2>5. Составитель</h2>
+    <h2>4. Составитель</h2>
     <label>Кто составляет</label>
     <select id="personSelect"></select>
     <div class="hint">Если нужного человека нет в списке — просто впишите его в полях «От кого» и «Составил» прямо в служебке справа.</div>
+    <label>Департамент</label>
+    <input type="text" id="fDept">
+    <div class="hint">Подставляется автоматически по выбранному составителю, но поле остаётся редактируемым.</div>
   </div>
 
   <button id="buildBtn">Сформировать служебную записку</button>
@@ -215,17 +208,17 @@
   // self-service UI, per an explicit decision to keep this shared across every
   // browser/device rather than relying on per-browser localStorage).
   const PEOPLE = [
-    { id: "generalov", posNom: "Менеджер образовательных программ", posGen: "Менеджера образовательных программ", nameNom: "Генералов В.", nameGen: "Генералова В." },
-    { id: "mukhametkali", posNom: "Менеджерка образовательных программ", posGen: "Менеджерки образовательных программ", nameNom: "Мухаметкали И.", nameGen: "Мухаметкали И." },
-    { id: "isakov", posNom: "Руководитель образовательных программ", posGen: "Руководителя образовательных программ", nameNom: "Исаков М.", nameGen: "Исакова М." },
-    { id: "pan", posNom: "Координатор ателье", posGen: "Координатора ателье", nameNom: "Пан Д.", nameGen: "Пан Д." },
-    { id: "tairkhanova", posNom: "Арт-менеджерка", posGen: "Арт-менеджерки", nameNom: "Таирханова Ф.", nameGen: "Таирхановой Ф." },
-    { id: "mukazhan", posNom: "Арт-менеджерка", posGen: "Арт-менеджерки", nameNom: "Мукажан А.", nameGen: "Мукажан А." },
-    { id: "duisenbinov", posNom: "Менеджер издательской программы", posGen: "Менеджера издательской программы", nameNom: "Дуйсенбинов А.", nameGen: "Дуйсенбинова А." },
-    { id: "goncharov", posNom: "Заместитель технического директора", posGen: "Заместителя технического директора", nameNom: "Гончаров И.", nameGen: "Гончарова И." },
-    { id: "maslova", posNom: "Художник по свету", posGen: "Художника по свету", nameNom: "Маслова Е.", nameGen: "Масловой Е." },
-    { id: "zaitov", posNom: "Специалист технического отдела", posGen: "Специалиста технического отдела", nameNom: "Заитов И.", nameGen: "Заитова И." },
-    { id: "petruk", posNom: "Технический директор", posGen: "Технического директора", nameNom: "Петрук К.", nameGen: "Петрука К." }
+    { id: "generalov", posNom: "Менеджер образовательных программ", posGen: "Менеджера образовательных программ", nameNom: "Генералов В.", nameGen: "Генералова В.", dept: "Tselinny Learning" },
+    { id: "mukhametkali", posNom: "Менеджерка образовательных программ", posGen: "Менеджерки образовательных программ", nameNom: "Мухаметкали И.", nameGen: "Мухаметкали И.", dept: "Tselinny Learning" },
+    { id: "isakov", posNom: "Руководитель образовательных программ", posGen: "Руководителя образовательных программ", nameNom: "Исаков М.", nameGen: "Исакова М.", dept: "Tselinny Learning" },
+    { id: "pan", posNom: "Координатор ателье", posGen: "Координатора ателье", nameNom: "Пан Д.", nameGen: "Пан Д.", dept: "Tselinny Learning" },
+    { id: "tairkhanova", posNom: "Арт-менеджерка", posGen: "Арт-менеджерки", nameNom: "Таирханова Ф.", nameGen: "Таирхановой Ф.", dept: "Художественный отдел" },
+    { id: "mukazhan", posNom: "Арт-менеджерка", posGen: "Арт-менеджерки", nameNom: "Мукажан А.", nameGen: "Мукажан А.", dept: "Художественный отдел" },
+    { id: "duisenbinov", posNom: "Менеджер издательской программы", posGen: "Менеджера издательской программы", nameNom: "Дуйсенбинов А.", nameGen: "Дуйсенбинова А.", dept: "Художественный отдел" },
+    { id: "goncharov", posNom: "Заместитель технического директора", posGen: "Заместителя технического директора", nameNom: "Гончаров И.", nameGen: "Гончарова И.", dept: "Технический отдел" },
+    { id: "maslova", posNom: "Художник по свету", posGen: "Художника по свету", nameNom: "Маслова Е.", nameGen: "Масловой Е.", dept: "Технический отдел" },
+    { id: "zaitov", posNom: "Специалист технического отдела", posGen: "Специалиста технического отдела", nameNom: "Заитов И.", nameGen: "Заитова И.", dept: "Технический отдел" },
+    { id: "petruk", posNom: "Технический директор", posGen: "Технического директора", nameNom: "Петрук К.", nameGen: "Петрука К.", dept: "Технический отдел" }
   ];
 
   function renderPersonSelect(){
@@ -244,11 +237,16 @@
     return PEOPLE.find(p => p.id === id) || PEOPLE[0];
   }
 
+  // Департамент is tied to whichever person is composing the memo — auto-filled on
+  // selection, but the field stays a plain editable input for the rare exception.
+  document.getElementById("personSelect").addEventListener("change", () => {
+    document.getElementById("fDept").value = selectedPerson().dept;
+    renderMemo(collectFields());
+  });
+
   // ---------- init defaults on load ----------
-  document.getElementById("fKomu").value = DEFAULTS.komu;
-  document.getElementById("fSoglasovano").value = DEFAULTS.soglasovano;
-  document.getElementById("fDept").value = DEFAULTS.dept;
   renderPersonSelect();
+  document.getElementById("fDept").value = selectedPerson().dept;
 
   function todayFormatted(){
     const d = new Date();
@@ -563,8 +561,8 @@
     const schetDate = document.getElementById("fSchetDate").value.trim();
     const summa = document.getElementById("fSumma").value.trim();
     const date = document.getElementById("fDate").value.trim();
-    const komu = document.getElementById("fKomu").value.trim();
-    const soglasovano = document.getElementById("fSoglasovano").value.trim();
+    const komu = DEFAULTS.komu;
+    const soglasovano = DEFAULTS.soglasovano;
     const dept = document.getElementById("fDept").value.trim();
     const person = selectedPerson();
     const otKogo = `${person.posGen} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameGen}.`;
