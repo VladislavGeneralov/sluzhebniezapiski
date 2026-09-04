@@ -565,8 +565,9 @@
     const soglasovano = DEFAULTS.soglasovano;
     const dept = document.getElementById("fDept").value.trim();
     const person = selectedPerson();
-    const otKogo = `${person.posGen} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameGen}.`;
-    const sostavil = `${person.posNom} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameNom}.`;
+    // nameGen/nameNom already end in "." (the initial, e.g. "Заитов И.") — no extra period.
+    const otKogo = `${person.posGen} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameGen}`;
+    const sostavil = `${person.posNom} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameNom}`;
 
     // "Назначение"/"Цель" are shown capitalized in their own hints, but here they land
     // mid-sentence — force the leading letter lowercase regardless of how the user typed it.
