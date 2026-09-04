@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Автослужебка — АТЦ Галерея</title>
+<style>
+  :root{
+    --border:#000; --bg:#fff; --card:#fff; --text:#000; --muted:#555;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:Segoe UI, Arial, sans-serif; background:var(--bg); color:var(--text);
+    padding:24px; line-height:1.4;
+  }
+  h1{font-size:20px; margin:0 0 4px; color:#000;}
+  .sub{color:var(--muted); margin:0 0 20px; font-size:13px;}
+  .layout{display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;}
+  @media (max-width: 980px){ .layout{grid-template-columns:1fr;} }
+  .card{background:var(--card); border:1px solid var(--border); border-radius:0; padding:16px 18px; margin-bottom:16px;}
+  .card h2{font-size:14px; margin:0 0 12px; color:#000;}
+  label{display:block; font-size:12.5px; color:#000; margin:10px 0 4px;}
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=file], textarea, select{
+    width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:0;
+    font-size:13.5px; font-family:inherit; background:#fff; color:#000;
+  }
+  textarea{resize:vertical;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .hint{font-size:11px; color:var(--muted); margin-top:3px;}
+  button{
+    cursor:pointer; border:1px solid #000; border-radius:0; padding:9px 14px; font-size:13px;
+    background:#000; color:#fff; font-weight:600;
+  }
+  button:hover{background:#333;}
+  button.secondary{background:#fff; color:#000; font-weight:500;}
+  button.secondary:hover{background:#eee;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  .btnrow{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
+  .progress{font-size:12px; color:#000; margin-top:8px; min-height:16px;}
+  details summary{cursor:pointer; font-size:12.5px; color:var(--muted); margin-top:8px;}
+  /* preview tabs */
+  .tabbar{display:flex; gap:0;}
+  .tabbtn{background:#fff; color:#000; border:1px solid #000; border-bottom:none; border-radius:0; padding:8px 14px; font-size:12.5px; cursor:pointer; font-weight:500;}
+  .tabbtn + .tabbtn{border-left:none;}
+  .tabbtn.active{background:#000; color:#fff; font-weight:600;}
+  #paneOriginal img, #paneOriginal iframe{display:block;}
+
+  /* preview / printable memo */
+  #previewWrap{background:#fff; border:1px solid var(--border); border-radius:0; padding:0; overflow:hidden; max-height:640px; overflow-y:auto;}
+  #memo{width:100%; padding:26px 30px 34px; font-family:"Times New Roman", Times, serif; color:#000; background:#fff;}
+  #memo .logo{width:100%; display:block; margin-bottom:18px;}
+  #memo h3{text-align:center; font-size:16px; margin:0 0 18px; color:#000;}
+  #memo table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  #memo td{border:1px solid #000; padding:8px 10px; vertical-align:top; color:#000;}
+  #memo td[contenteditable]:hover{background:#f4f4f4;}
+  #memo td[contenteditable]:focus{outline:1px dashed #000; outline-offset:-3px; background:#fff;}
+  #memo td.k{width:26%; font-weight:normal;}
+  .empty-note{color:var(--muted); font-size:13px; padding:40px 20px; text-align:center;}
+</style>
+</head>
+<body>
+
+<h1>Автослужебка</h1>
+<p class="sub">Скан счёта → распознавание номера/даты/суммы офлайн в браузере → готовая служебная записка (Word и PDF). Данные никуда не отправляются, всё считается локально.</p>
+
+<div class="layout">
+<div id="leftPanel">
+
+  <div class="card">
+    <h2>1. Скан счёта</h2>
+    <input type="file" id="fileInput" accept="image/*,.pdf">
+    <div class="hint">Поддерживаются: PDF, JPG, PNG, WEBP, BMP, GIF.</div>
+    <div class="progress" id="progress"></div>
+    <details>
+      <summary>Показать распознанный текст</summary>
+      <textarea id="rawText" rows="8" placeholder="Здесь появится текст, извлечённый из файла..."></textarea>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>2. Данные из счёта (проверьте — распознавание может ошибаться)</h2>
+    <div class="row2">
+      <div>
+        <label>Номер счёта</label>
+        <input type="text" id="fSchetNumber">
+        <div class="hint">Например <i>000001119</i></div>
+      </div>
+      <div>
+        <label>Дата счёта</label>
+        <input type="text" id="fSchetDate" placeholder="дд.мм.гггг">
+      </div>
+    </div>
+    <label>Сумма (с НДС), теңге</label>
+    <input type="text" id="fSumma">
+    <div class="hint">Например <i>22 040.00</i></div>
+  </div>
+
+  <div class="card">
+    <h2>3. Вручную: суть записки</h2>
+    <label>Тема</label>
+    <input type="text" id="fTema">
+    <div class="hint">Например <i>Проведение детского воркшопа «Ландшафты»</i>, или <i>Оснащение пространства Ателье</i></div>
+    <label>Назначение (после «оплату»)</label>
+    <input type="text" id="fNaznachenie">
+    <div class="hint">Например <i>канцелярских материалов</i></div>
+    <label>Цель (после «для»)</label>
+    <input type="text" id="fCel">
+    <div class="hint">Подставляется автоматически по «Теме» (например <i>Проведения</i> детского воркшопа «Ландшафты», или <i>Оснащения</i> пространства Ателье), но это черновик — проверьте падеж и поправьте при необходимости.</div>
+    <div class="hint">Итоговая фраза: «Прошу дать разрешение на оплату <b>[назначение]</b> для <b>[цель]</b> по счету № [номер] от [дата] на сумму [сумма] теңге.» Если нужно другое слово вместо «оплату» (например «покупку») — поправьте прямо в предпросмотре справа.</div>
+    <label>Дата служебной записки</label>
+    <input type="text" id="fDate" placeholder="дд.мм.гггг">
+  </div>
+
+  <div class="card">
+    <h2>4. Постоянные реквизиты</h2>
+    <label>Кому</label>
+    <input type="text" id="fKomu">
+    <label>Согласовано</label>
+    <input type="text" id="fSoglasovano">
+    <label>Департамент</label>
+    <input type="text" id="fDept">
+  </div>
+
+  <div class="card">
+    <h2>5. Составитель</h2>
+    <label>Кто составляет</label>
+    <select id="personSelect"></select>
+    <div class="hint">Если нужного человека нет в списке — просто впишите его в полях «От кого» и «Составил» прямо в служебке справа.</div>
+  </div>
+
+  <button id="buildBtn">Сформировать служебную записку</button>
+
+</div>
+
+<div>
+  <div class="card" style="position:sticky; top:20px;">
+    <h2>Предпросмотр</h2>
+    <div class="tabbar">
+      <button type="button" class="tabbtn active" id="tabOriginalBtn">Оригинал (скан)</button>
+      <button type="button" class="tabbtn" id="tabMemoBtn">Служебка</button>
+    </div>
+    <div id="previewWrap">
+      <div id="paneOriginal">
+        <div class="empty-note" id="originalEmpty">Загрузите скан счёта слева — появится здесь для сверки</div>
+        <img id="originalImg" style="display:none; width:100%;" alt="скан счёта">
+        <iframe id="originalPdf" style="display:none; width:100%; height:640px; border:none;"></iframe>
+      </div>
+      <div id="paneMemo" style="display:none;">
+        <div id="memo">
+          <img class="logo" id="logoImg" alt="">
+          <h3>Служебная записка</h3>
+          <div class="hint" style="margin-bottom:8px;">Текст справа можно поправить прямо здесь, в любом месте — экспорт в .docx/.pdf возьмёт текст с учётом ваших правок.</div>
+          <table>
+            <tr><td class="k">Кому</td><td id="pv-komu" contenteditable="true"></td></tr>
+            <tr><td class="k">От кого</td><td id="pv-otkogo" contenteditable="true"></td></tr>
+            <tr><td class="k">Департамент</td><td id="pv-dept" contenteditable="true"></td></tr>
+            <tr><td class="k">Тема</td><td id="pv-tema" contenteditable="true"></td></tr>
+            <tr><td class="k">Обоснование</td><td id="pv-obosn" contenteditable="true"></td></tr>
+            <tr><td class="k">Дата</td><td id="pv-date" contenteditable="true"></td></tr>
+            <tr><td class="k">Согласовано</td><td id="pv-soglasovano" contenteditable="true"></td></tr>
+            <tr><td class="k">Составил</td><td id="pv-sostavil" contenteditable="true"></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button id="downloadDocxBtn">Скачать .docx</button>
+      <button id="downloadPdfBtn">Скачать .pdf</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="assets.js"></script>
+<script type="module">
+  import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.min.mjs";
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/6.3.289/pdf.worker.min.mjs";
+  window.pdfjsLib = pdfjsLib;
+  window.dispatchEvent(new Event("pdfjs-ready"));
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/7.0.0/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  const pdfjsReady = new Promise(resolve => {
+    if (window.pdfjsLib) return resolve();
+    window.addEventListener("pdfjs-ready", () => resolve(), { once:true });
+  });
+
+  // ---------- exact original template snippets (must match word/document.xml verbatim) ----------
+  const ORIG = {
+    komu:        "Директору ТОО “АТЦ Галерея” Саттыбаевой Г.Т.",
+    otKogo:      "Менеджера образовательных программ ТОО “АТЦ Галерея” Генералова В.Д.",
+    dept:        "Tselinny Learning",
+    tema:        "проведение детского воркшопа “Композиция: База”",
+    obosn:       "Прошу дать разрешение на оплату канцелярских материалов для проведения воркшопа “Композиция: База” по счету №124 от 03.09.2026 на сумму 22 040.00 тенге включая НДС.",
+    date:        "03.09.2026",
+    soglasovano: "Директором ТОО “АТЦ Галерея” Саттыбаевой Г.Т.",
+    sostavil:    "Менеджер образовательных программ ТОО “АТЦ Галерея” Генералов В.Д."
+  };
+  const Q1 = "“", Q2 = "”"; // curly quotes used throughout the template
+
+  // ---------- defaults ----------
+  const DEFAULTS = {
+    komu: `Директору ТОО ${Q1}АТЦ Галерея${Q2} Саттыбаевой Г.Т.`,
+    soglasovano: `Директором ТОО ${Q1}АТЦ Галерея${Q2} Саттыбаевой Г.Т.`,
+    dept: "Tselinny Learning"
+  };
+
+  // Fixed roster — edit this list directly in the code to add/remove people (no
+  // self-service UI, per an explicit decision to keep this shared across every
+  // browser/device rather than relying on per-browser localStorage).
+  const PEOPLE = [
+    { id: "generalov", posNom: "Менеджер образовательных программ", posGen: "Менеджера образовательных программ", nameNom: "Генералов В.", nameGen: "Генералова В." },
+    { id: "mukhametkali", posNom: "Менеджерка образовательных программ", posGen: "Менеджерки образовательных программ", nameNom: "Мухаметкали И.", nameGen: "Мухаметкали И." },
+    { id: "isakov", posNom: "Руководитель образовательных программ", posGen: "Руководителя образовательных программ", nameNom: "Исаков М.", nameGen: "Исакова М." },
+    { id: "pan", posNom: "Координатор ателье", posGen: "Координатора ателье", nameNom: "Пан Д.", nameGen: "Пан Д." },
+    { id: "tairkhanova", posNom: "Арт-менеджерка", posGen: "Арт-менеджерки", nameNom: "Таирханова Ф.", nameGen: "Таирхановой Ф." },
+    { id: "mukazhan", posNom: "Арт-менеджерка", posGen: "Арт-менеджерки", nameNom: "Мукажан А.", nameGen: "Мукажан А." },
+    { id: "duisenbinov", posNom: "Менеджер издательской программы", posGen: "Менеджера издательской программы", nameNom: "Дуйсенбинов А.", nameGen: "Дуйсенбинова А." },
+    { id: "goncharov", posNom: "Заместитель технического директора", posGen: "Заместителя технического директора", nameNom: "Гончаров И.", nameGen: "Гончарова И." },
+    { id: "maslova", posNom: "Художник по свету", posGen: "Художника по свету", nameNom: "Маслова Е.", nameGen: "Масловой Е." },
+    { id: "zaitov", posNom: "Специалист технического отдела", posGen: "Специалиста технического отдела", nameNom: "Заитов И.", nameGen: "Заитова И." },
+    { id: "petruk", posNom: "Технический директор", posGen: "Технического директора", nameNom: "Петрук К.", nameGen: "Петрука К." }
+  ];
+
+  function renderPersonSelect(){
+    const sel = document.getElementById("personSelect");
+    sel.innerHTML = "";
+    PEOPLE.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.posNom} ${p.nameNom}`;
+      sel.appendChild(opt);
+    });
+  }
+
+  function selectedPerson(){
+    const id = document.getElementById("personSelect").value;
+    return PEOPLE.find(p => p.id === id) || PEOPLE[0];
+  }
+
+  // ---------- init defaults on load ----------
+  document.getElementById("fKomu").value = DEFAULTS.komu;
+  document.getElementById("fSoglasovano").value = DEFAULTS.soglasovano;
+  document.getElementById("fDept").value = DEFAULTS.dept;
+  renderPersonSelect();
+
+  function todayFormatted(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
+  }
+  document.getElementById("fDate").value = todayFormatted();
+
+  // ---------- cropped logo (matches the crop Word applies to image1.png) ----------
+  let logoDataUrl = null;
+  function buildLogo(){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const l=0.02657, r=0.06644, t=0.23148, b=0.47222;
+        const sx = img.width*l, sy = img.height*t;
+        const sw = img.width*(1-l-r), sh = img.height*(1-t-b);
+        const canvas = document.createElement("canvas");
+        canvas.width = sw; canvas.height = sh;
+        canvas.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+        logoDataUrl = canvas.toDataURL("image/png");
+        resolve(logoDataUrl);
+      };
+      img.onerror = () => reject(new Error("Не удалось загрузить логотип"));
+      img.src = "data:image/png;base64," + LOGO_PNG_BASE64;
+    });
+  }
+  buildLogo();
+
+  // ---------- amount parsing / formatting ----------
+  function parseAmount(raw){
+    let s = raw.trim().replace(/[\s ]/g, "");
+    const m = s.match(/^([\d.,]*?)([.,])(\d{1,2})$/);
+    if (m){
+      const intPart = m[1].replace(/[.,]/g, "");
+      const decPart = m[3].padEnd(2, "0");
+      return parseFloat(intPart + "." + decPart);
+    }
+    const digitsOnly = s.replace(/[.,]/g, "");
+    return digitsOnly ? parseFloat(digitsOnly) : NaN;
+  }
+  function formatSum(num){
+    if (isNaN(num)) return "";
+    const [intPart, decPart] = num.toFixed(2).split(".");
+    const withSpaces = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return withSpaces + "." + decPart;
+  }
+
+  // ---------- field extraction from recognized text ----------
+  const MONTHS = {"января":1,"февраля":2,"марта":3,"апреля":4,"мая":5,"июня":6,"июля":7,"августа":8,"сентября":9,"октября":10,"ноября":11,"декабря":12};
+
+  function extractInvoiceNumber(text){
+    // The real invoice number always sits in a "№ X ... от ..." header, and that header
+    // line (or the line right above it, e.g. "Счет на оплату") mentions "счет"/"счёт".
+    // Item rows can also contain "№" (article/color codes like "№9 терракотовый мягкий"),
+    // and messy OCR can even swallow the digit and glue "№" straight onto the word (giving
+    // pure-letter garbage like "тервакотовый") — so besides anchoring by context, a real
+    // invoice number must contain at least one digit. We scan every "№" occurrence and pick
+    // the best-anchored digit-bearing candidate rather than just the first match.
+    const basePattern = /№\s*([A-Za-zА-Яа-яЁё0-9][A-Za-zА-Яа-яЁё0-9\-\/]*)/g;
+    const lines = text.split("\n");
+    function lineIndexAt(charIdx){
+      let count = 0;
+      for (let i = 0; i < lines.length; i++){
+        count += lines[i].length + 1;
+        if (charIdx < count) return i;
+      }
+      return lines.length - 1;
+    }
+    const followedByOt = (idx) => /(?:^|[^A-Za-zА-Яа-яЁё])от(?:[^A-Za-zА-Яа-яЁё]|$)/.test(text.slice(idx, idx + 40));
+
+    const candidates = [];
+    let m;
+    while ((m = basePattern.exec(text)) !== null){
+      const value = m[1];
+      if (!/\d/.test(value)) continue; // real invoice numbers always contain a digit
+      const li = lineIndexAt(m.index);
+      const context = (li > 0 ? lines[li-1] + "\n" : "") + lines[li];
+      candidates.push({
+        value,
+        followedByOt: followedByOt(m.index + m[0].length),
+        nearSchet: /(?<![A-Za-zА-Яа-яЁё-])сч[её]т/i.test(context)
+      });
+    }
+    const best = candidates.find(c => c.followedByOt && c.nearSchet)
+      || candidates.find(c => c.followedByOt)
+      || candidates.find(c => c.nearSchet)
+      || candidates[0];
+    return best ? best.value : "";
+  }
+  function extractDate(text){
+    // Same anchoring problem as the invoice number: a bare "от ДД.ММ.ГГГГ" can occur
+    // anywhere (e.g. a "Договор:"/supplementary-agreement date), so prefer a date that
+    // sits on a line mentioning "счет"/"счёт" (or the line right after it) before
+    // falling back to the first date-looking match anywhere in the text.
+    const numericPattern = /от\s+(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})\b/;
+    const wordPattern = /от\s+(\d{1,2})\s+([а-яёА-ЯЁ]+)\s+(\d{4})/;
+    const toDate = (m, isWord) => {
+      if (isWord){
+        const mon = MONTHS[m[2].toLowerCase()];
+        return mon ? `${m[1].padStart(2,"0")}.${String(mon).padStart(2,"0")}.${m[3]}` : null;
+      }
+      let [, d, mo, y] = m;
+      if (y.length === 2) y = "20" + y;
+      return `${d.padStart(2,"0")}.${mo.padStart(2,"0")}.${y}`;
+    };
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length; i++){
+      const context = (i > 0 ? lines[i-1] + "\n" : "") + lines[i];
+      if (!/(?<![A-Za-zА-Яа-яЁё-])сч[её]т/i.test(context)) continue;
+      let m = lines[i].match(numericPattern);
+      if (m) return toDate(m, false);
+      m = lines[i].match(wordPattern);
+      if (m){ const d = toDate(m, true); if (d) return d; }
+    }
+    let m = text.match(numericPattern);
+    if (m) return toDate(m, false);
+    m = text.match(wordPattern);
+    if (m){ const d = toDate(m, true); if (d) return d; }
+    return "";
+  }
+  function extractSum(text){
+    // total-line wording varies between suppliers — try the most specific/common labels
+    // first, falling back to a bare "Сумма" only if nothing more specific was found
+    const patterns = [
+      /Итого[:\s]*([\d][\d\s.,]*\d|\d)/i,
+      /(?:Всего\s+)?к\s*оплате[:\s]*([\d][\d\s.,]*\d|\d)/i,
+      /Сумма[:\s]*([\d][\d\s.,]*\d|\d)/i
+    ];
+    for (const p of patterns){
+      const m = text.match(p);
+      if (m){
+        const val = parseAmount(m[1]);
+        if (!isNaN(val)) return formatSum(val);
+      }
+    }
+    return "";
+  }
+
+  // ---------- OCR / PDF text extraction ----------
+  function setProgress(msg){ document.getElementById("progress").textContent = msg || ""; }
+
+  async function ocrSource(source){
+    const { data: { text } } = await Tesseract.recognize(source, "rus+eng", {
+      logger: (m) => {
+        if (m.status && typeof m.progress === "number"){
+          setProgress(`${m.status}: ${Math.round(m.progress*100)}%`);
+        }
+      }
+    });
+    return text;
+  }
+
+  // pdf.js returns text items in the order they occur in the PDF's internal content
+  // stream, which for auto-generated invoices often does NOT match visual reading order.
+  // Rebuild reading order from each item's on-page position instead of trusting stream order.
+  function pageTextInReadingOrder(content){
+    const items = content.items
+      .filter(it => it.str && it.str.trim())
+      .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5] }));
+    const lineTolerance = 2.5;
+    const lines = [];
+    for (const it of items){
+      let line = lines.find(l => Math.abs(l.y - it.y) < lineTolerance);
+      if (!line){ line = { y: it.y, items: [] }; lines.push(line); }
+      line.items.push(it);
+    }
+    lines.sort((a, b) => b.y - a.y);
+    return lines.map(l => l.items.sort((a, b) => a.x - b.x).map(i => i.str).join(" ")).join("\n");
+  }
+
+  async function recognizePdf(file){
+    await pdfjsReady;
+    const buf = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    let text = "";
+    const pages = Math.min(pdf.numPages, 3);
+    for (let i = 1; i <= pages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += pageTextInReadingOrder(content) + "\n";
+    }
+    if (text.trim().replace(/\s/g,"").length < 15){
+      setProgress("Скан без текстового слоя — распознаю картинку...");
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 2.5 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      text = await ocrSource(canvas);
+    }
+    return text;
+  }
+
+  async function recognizeFile(file){
+    if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)){
+      return await recognizePdf(file);
+    }
+    return await ocrSource(file);
+  }
+
+  // ---------- preview tabs ----------
+  function setTab(tab){
+    const isOriginal = tab === "original";
+    document.getElementById("tabOriginalBtn").classList.toggle("active", isOriginal);
+    document.getElementById("tabMemoBtn").classList.toggle("active", !isOriginal);
+    document.getElementById("paneOriginal").style.display = isOriginal ? "block" : "none";
+    document.getElementById("paneMemo").style.display = isOriginal ? "none" : "block";
+  }
+  document.getElementById("tabOriginalBtn").addEventListener("click", () => setTab("original"));
+  document.getElementById("tabMemoBtn").addEventListener("click", () => setTab("memo"));
+
+  let originalObjectUrl = null;
+  function showOriginalPreview(file){
+    if (originalObjectUrl) URL.revokeObjectURL(originalObjectUrl);
+    originalObjectUrl = URL.createObjectURL(file);
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    document.getElementById("originalEmpty").style.display = "none";
+    document.getElementById("originalImg").style.display = isPdf ? "none" : "block";
+    document.getElementById("originalPdf").style.display = isPdf ? "block" : "none";
+    if (isPdf){
+      document.getElementById("originalPdf").src = originalObjectUrl;
+    } else {
+      document.getElementById("originalImg").src = originalObjectUrl;
+    }
+    setTab("original");
+  }
+
+  // Guards against a slow OCR run finishing after the user has already picked a
+  // different file: only the most recently started recognition is allowed to write
+  // its results into the form.
+  let recognitionRunId = 0;
+  document.getElementById("fileInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    showOriginalPreview(file);
+    setProgress("Распознавание...");
+    const runId = ++recognitionRunId;
+    try {
+      const text = await recognizeFile(file);
+      if (runId !== recognitionRunId) return;
+      document.getElementById("rawText").value = text;
+      document.getElementById("fSchetNumber").value = extractInvoiceNumber(text);
+      const date = extractDate(text);
+      document.getElementById("fSchetDate").value = date;
+      document.getElementById("fSumma").value = extractSum(text);
+      renderMemo(collectFields());
+      setProgress("Готово. Проверьте распознанные поля ниже.");
+    } catch(err){
+      if (runId !== recognitionRunId) return;
+      console.error(err);
+      setProgress("Ошибка распознавания: " + err.message);
+    }
+  });
+
+  // ---------- build memo ----------
+  function escXml(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function fileNameFor(f, ext){
+    const stripIllegal = (s) => s.replace(/[\\/:*?"<>|]/g, "").trim();
+    return `Служебная записка ${stripIllegal(f.tema)} ${stripIllegal(f.date)}.${ext}`;
+  }
+
+  // "Цель" starts out mirroring "Тема" verbatim, as a convenient starting point — the two
+  // often need different grammatical case (e.g. "проведение..." vs "для проведения..."),
+  // so this is just a draft the user is expected to adjust by hand, not an auto-declension.
+  // Genitive of Russian action nouns (проведение -> проведения, оснащение -> оснащения)
+  // is a very regular pattern, unlike surname declension — safe to guess automatically.
+  // Only the leading word is declined; everything after it (incl. quoted titles, which
+  // never decline in Russian) is left untouched. Always just a draft: user can retype it.
+  function declineFirstWordGenitive(phrase){
+    const m = phrase.match(/^(\S+)(\s*[\s\S]*)$/);
+    if (!m) return phrase;
+    const [, word, rest] = m;
+    let declined;
+    if (/ие$/i.test(word)) declined = word.slice(0, -1) + "я";
+    else if (/ия$/i.test(word)) declined = word.slice(0, -1) + "и";
+    else if (/ь$/i.test(word)) declined = word.slice(0, -1) + "и";
+    else if (/[гкхжчшщ]а$/i.test(word)) declined = word.slice(0, -1) + "и";
+    else if (/а$/i.test(word)) declined = word.slice(0, -1) + "ы";
+    else if (/о$/i.test(word)) declined = word.slice(0, -1) + "а";
+    else if (/[бвгджзйклмнпрстфхцчшщ]$/i.test(word)) declined = word + "а";
+    else declined = word;
+    return declined + rest;
+  }
+
+  document.getElementById("fTema").addEventListener("input", (e) => {
+    const cel = document.getElementById("fCel");
+    if (!cel.dataset.touched) cel.value = declineFirstWordGenitive(e.target.value);
+  });
+  document.getElementById("fCel").addEventListener("input", (e) => {
+    e.target.dataset.touched = "1";
+  });
+
+  function collectFields(){
+    const tema = document.getElementById("fTema").value.trim();
+    const cel = document.getElementById("fCel").value.trim();
+    const naznachenie = document.getElementById("fNaznachenie").value.trim();
+    const schetNumber = document.getElementById("fSchetNumber").value.trim();
+    const schetDate = document.getElementById("fSchetDate").value.trim();
+    const summa = document.getElementById("fSumma").value.trim();
+    const date = document.getElementById("fDate").value.trim();
+    const komu = document.getElementById("fKomu").value.trim();
+    const soglasovano = document.getElementById("fSoglasovano").value.trim();
+    const dept = document.getElementById("fDept").value.trim();
+    const person = selectedPerson();
+    const otKogo = `${person.posGen} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameGen}.`;
+    const sostavil = `${person.posNom} ТОО ${Q1}АТЦ Галерея${Q2} ${person.nameNom}.`;
+
+    // "Назначение"/"Цель" are shown capitalized in their own hints, but here they land
+    // mid-sentence — force the leading letter lowercase regardless of how the user typed it.
+    const lowerFirst = (s) => s ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+    const obosn = `Прошу дать разрешение на оплату ${lowerFirst(naznachenie)} для ${lowerFirst(cel)} по счету № ${schetNumber} от ${schetDate} на сумму ${summa} теңге.`;
+
+    return { komu, otKogo, dept, tema, obosn, date, soglasovano, sostavil };
+  }
+
+  function validate(f){
+    const required = { "Тема": f.tema, "Назначение": document.getElementById("fNaznachenie").value.trim(),
+      "Цель": document.getElementById("fCel").value.trim(),
+      "Номер счёта": document.getElementById("fSchetNumber").value.trim(),
+      "Дата счёта": document.getElementById("fSchetDate").value.trim(),
+      "Сумма": document.getElementById("fSumma").value.trim(),
+      "Дата записки": f.date, "Кому": f.komu, "Согласовано": f.soglasovano, "Департамент": f.dept };
+    const missing = Object.entries(required).filter(([,v]) => !v).map(([k]) => k);
+    return missing;
+  }
+
+  // Renders the memo table from a fields object — live, on every keystroke in the left
+  // form (see the delegated listener below), not just on "Сформировать". Whichever edit
+  // happened last wins: typing in the form overwrites the preview, and hand-editing a
+  // preview cell sticks until the next form edit touches it again — no permanent lock.
+  async function renderMemo(f){
+    document.getElementById("pv-komu").textContent = f.komu;
+    document.getElementById("pv-otkogo").textContent = f.otKogo;
+    document.getElementById("pv-dept").textContent = f.dept;
+    document.getElementById("pv-tema").textContent = f.tema;
+    document.getElementById("pv-obosn").textContent = f.obosn;
+    document.getElementById("pv-date").textContent = f.date;
+    document.getElementById("pv-soglasovano").textContent = f.soglasovano;
+    document.getElementById("pv-sostavil").textContent = f.sostavil;
+    if (!logoDataUrl) await buildLogo();
+    document.getElementById("logoImg").src = logoDataUrl;
+  }
+
+  renderMemo(collectFields());
+
+  // Live preview: any edit anywhere in the left-hand form re-renders the memo immediately,
+  // instead of waiting for "Сформировать". One delegated listener covers every field,
+  // present and future, without wiring each input up individually.
+  document.getElementById("leftPanel").addEventListener("input", (e) => {
+    if (e.target.id === "fileInput") return;
+    renderMemo(collectFields());
+  });
+
+  document.getElementById("buildBtn").addEventListener("click", async () => {
+    const f = collectFields();
+    const missing = validate(f);
+    if (missing.length){
+      alert("Не заполнено: " + missing.join(", "));
+      return;
+    }
+    await renderMemo(f);
+    setTab("memo");
+  });
+
+  // ---------- .docx export (patches the real original template) ----------
+  function replaceExactRunText(xml, oldText, newText){
+    const oldEsc = oldText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = new RegExp("(<w:t[^>]*>)" + oldEsc + "(</w:t>)");
+    if (!pattern.test(xml)) throw new Error("Не найден фрагмент шаблона: " + oldText.slice(0,40));
+    return xml.replace(pattern, (m, p1, p2) => p1 + newText + p2);
+  }
+
+  // reads the memo fields live from the preview, so any manual edits made there
+  // (typos, swapping "оплату" for "покупку", non-workshop themes, etc.) are respected
+  function liveMemoFields(){
+    const get = (id) => document.getElementById(id).textContent;
+    return {
+      komu: get("pv-komu"), otKogo: get("pv-otkogo"), dept: get("pv-dept"),
+      tema: get("pv-tema"), obosn: get("pv-obosn"), date: get("pv-date"),
+      soglasovano: get("pv-soglasovano"), sostavil: get("pv-sostavil")
+    };
+  }
+
+  document.getElementById("downloadDocxBtn").addEventListener("click", async () => {
+    try {
+      const live = liveMemoFields();
+      const zip = await JSZip.loadAsync(TEMPLATE_DOCX_BASE64, { base64: true });
+      const path = "word/document.xml";
+      let xml = await zip.file(path).async("string");
+
+      const pairs = [
+        [ORIG.komu, live.komu],
+        [ORIG.otKogo, live.otKogo],
+        [ORIG.dept, live.dept],
+        [ORIG.tema, live.tema],
+        [ORIG.obosn, live.obosn],
+        [ORIG.date, live.date],
+        [ORIG.soglasovano, live.soglasovano],
+        [ORIG.sostavil, live.sostavil]
+      ];
+      for (const [oldText, newText] of pairs){
+        xml = replaceExactRunText(xml, oldText, escXml(newText));
+      }
+      zip.file(path, xml);
+      const blob = await zip.generateAsync({
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileNameFor(live, "docx");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch(err){
+      console.error(err);
+      alert("Не удалось собрать .docx: " + err.message);
+    }
+  });
+
+  // ---------- .pdf export (renders the on-screen preview) ----------
+  document.getElementById("downloadPdfBtn").addEventListener("click", () => {
+    const el = document.getElementById("memo");
+    html2pdf().set({
+      margin: 10,
+      filename: fileNameFor(liveMemoFields(), "pdf"),
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).from(el).save();
+  });
+
+})();
+</script>
+</body>
+</html>
