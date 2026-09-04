@@ -521,20 +521,41 @@
   // is a very regular pattern, unlike surname declension — safe to guess automatically.
   // Only the leading word is declined; everything after it (incl. quoted titles, which
   // never decline in Russian) is left untouched. Always just a draft: user can retype it.
+  function isAdjectiveShaped(word){
+    return /(ый|ий|ой|ая|яя|ое|ее)$/i.test(word);
+  }
+  function declineOneWordGenitive(word){
+    if (/ый$/i.test(word) || /ий$/i.test(word) || /ой$/i.test(word)) return word.slice(0, -2) + "ого";
+    if (/ая$/i.test(word)) return word.slice(0, -2) + "ой";
+    if (/яя$/i.test(word)) return word.slice(0, -2) + "ей";
+    if (/ое$/i.test(word)) return word.slice(0, -2) + "ого";
+    if (/ее$/i.test(word)) return word.slice(0, -2) + "его";
+    if (/ие$/i.test(word)) return word.slice(0, -1) + "я";
+    if (/ия$/i.test(word)) return word.slice(0, -1) + "и";
+    if (/ь$/i.test(word)) return word.slice(0, -1) + "и";
+    if (/[гкхжчшщ]а$/i.test(word)) return word.slice(0, -1) + "и";
+    if (/а$/i.test(word)) return word.slice(0, -1) + "ы";
+    if (/о$/i.test(word)) return word.slice(0, -1) + "а";
+    if (/[бвгджзйклмнпрстфхцчшщ]$/i.test(word)) return word + "а";
+    return word;
+  }
   function declineFirstWordGenitive(phrase){
-    const m = phrase.match(/^(\S+)(\s*[\s\S]*)$/);
+    const m = phrase.match(/^(\S+)(\s*)([\s\S]*)$/);
     if (!m) return phrase;
-    const [, word, rest] = m;
-    let declined;
-    if (/ие$/i.test(word)) declined = word.slice(0, -1) + "я";
-    else if (/ия$/i.test(word)) declined = word.slice(0, -1) + "и";
-    else if (/ь$/i.test(word)) declined = word.slice(0, -1) + "и";
-    else if (/[гкхжчшщ]а$/i.test(word)) declined = word.slice(0, -1) + "и";
-    else if (/а$/i.test(word)) declined = word.slice(0, -1) + "ы";
-    else if (/о$/i.test(word)) declined = word.slice(0, -1) + "а";
-    else if (/[бвгджзйклмнпрстфхцчшщ]$/i.test(word)) declined = word + "а";
-    else declined = word;
-    return declined + rest;
+    const [, word1, sep, rest] = m;
+    if (isAdjectiveShaped(word1)){
+      // A bare "прилагательное + существительное" phrase with no leading action-noun
+      // (e.g. "детский воркшоп") — both words are still nominative, so both decline.
+      const restMatch = rest.match(/^(\S+)([\s\S]*)$/);
+      if (restMatch){
+        const [, word2, tail] = restMatch;
+        return declineOneWordGenitive(word1) + sep + declineOneWordGenitive(word2) + tail;
+      }
+      return declineOneWordGenitive(word1) + sep + rest;
+    }
+    // Leading action-noun (проведение, оснащение, ...) — the rest is assumed to already
+    // be written in the needed case by the user, matching the real company templates.
+    return declineOneWordGenitive(word1) + sep + rest;
   }
 
   document.getElementById("fTema").addEventListener("input", (e) => {
